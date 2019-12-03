@@ -16,6 +16,7 @@ class AudioRecorderController: UIViewController {
     
     // MARK: Recording
     var audioRecorder: AVAudioRecorder?
+    var recordURL: URL?
     
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var playButton: UIButton!
@@ -115,6 +116,9 @@ class AudioRecorderController: UIViewController {
         timeSlider.minimumValue = 0
         timeSlider.maximumValue = Float(audioPlayer?.duration ?? 0)
         timeSlider.value = Float(elapsedTime)
+        
+        let recordButtonTitle = isRecording ? "Stop Recoding" : "Record"
+        recordButton.setTitle(recordButtonTitle, for: .normal)
     }
     
     // MARK: Recoding
@@ -142,6 +146,8 @@ class AudioRecorderController: UIViewController {
         
         // Start a recoding
         audioRecorder = try! AVAudioRecorder(url: file, format: format)
+        recordURL = file
+        audioRecorder?.delegate = self
         audioRecorder?.record()
     }
     
@@ -157,6 +163,8 @@ class AudioRecorderController: UIViewController {
             record()
         }
     }
+    
+    // TODO; Know when the recoding finished, sothat we can play it back
 }
 
 extension AudioRecorderController: AVAudioPlayerDelegate {
@@ -169,5 +177,20 @@ extension AudioRecorderController: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         updateViews()   // TODO: is this on the main thread?
         // TODO: Cancel timer?
+    }
+}
+
+extension AudioRecorderController: AVAudioRecorderDelegate {
+    func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+        if let error = error {
+            print("Audio record error: \(error)")
+        }
+    }
+    
+    func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
+        if flag == true {
+            // if let recordURL = recordURL    works as well
+            audioPlayer = try! AVAudioPlayer(contentsOf: recorder.url) // catch errors
+        }
     }
 }
