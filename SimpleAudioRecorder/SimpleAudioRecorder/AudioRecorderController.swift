@@ -7,8 +7,14 @@
 //
 
 import UIKit
+import AVFoundation
 
 class AudioRecorderController: UIViewController {
+    
+    // MARK: Playback
+    var audioPlayer: AVAudioPlayer?
+    
+    // MARK: Recording
     
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var playButton: UIButton!
@@ -34,12 +40,47 @@ class AudioRecorderController: UIViewController {
                                                           weight: .regular)
         timeRemainingLabel.font = UIFont.monospacedDigitSystemFont(ofSize: timeRemainingLabel.font.pointSize,
                                                                    weight: .regular)
+        
+        loadAudio()
 	}
 
+    private func loadAudio() {
+        // piano.mp3
+        let songURL = Bundle.main.url(forResource: "piano", withExtension: "mp3")!
+        
+        // create the player
+        audioPlayer = try! AVAudioPlayer(contentsOf: songURL)
+    }
+    
 
     @IBAction func playButtonPressed(_ sender: Any) {
-
-	}
+        playPause()
+    }
+    
+    var isPlaying: Bool {
+        audioPlayer?.isPlaying ?? false
+    }
+    
+    // Play back
+    func play() {
+        audioPlayer?.play()
+    }
+    
+    func pause() {
+        audioPlayer?.pause()
+    }
+    
+    func playPause() {
+        if isPlaying {
+            pause()
+        } else {
+            play()
+        }
+    }
+    
+    
+    /// TODO: Update the UI for the playback
+    
     
     @IBAction func recordButtonPressed(_ sender: Any) {
     
