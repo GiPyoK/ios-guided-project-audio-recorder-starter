@@ -42,6 +42,7 @@ class AudioRecorderController: UIViewController {
                                                                    weight: .regular)
         
         loadAudio()
+        updateViews()
 	}
 
     private func loadAudio() {
@@ -50,12 +51,16 @@ class AudioRecorderController: UIViewController {
         
         // create the player
         audioPlayer = try! AVAudioPlayer(contentsOf: songURL)
+        audioPlayer?.delegate = self
     }
     
 
     @IBAction func playButtonPressed(_ sender: Any) {
         playPause()
     }
+    
+    // Timer
+    var timer: Timer?
     
     var isPlaying: Bool {
         audioPlayer?.isPlaying ?? false
@@ -64,10 +69,14 @@ class AudioRecorderController: UIViewController {
     // Play back
     func play() {
         audioPlayer?.play()
+        startTimer()
+        updateViews()
     }
     
     func pause() {
         audioPlayer?.pause()
+        cancelTimer()
+        updateViews()
     }
     
     func playPause() {
@@ -78,12 +87,49 @@ class AudioRecorderController: UIViewController {
         }
     }
     
+    private func startTimer() {
+        cancelTimer()
+        timer = Timer.scheduledTimer(timeInterval: 0.03, target: self, selector: #selector(updateTimer(timer:)), userInfo: nil, repeats: true)
+    }
+    
+    private func cancelTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    @objc private func updateTimer(timer: Timer) {
+        updateViews()
+    }
     
     /// TODO: Update the UI for the playback
-    
+    private func updateViews() {
+        // Play Pause button
+        let playButtonTItle = isPlaying ? "Pause" : "Play"
+        playButton.setTitle(playButtonTItle, for: .normal)
+        
+        // audio time
+        let elapsedTime = audioPlayer?.currentTime ?? 0
+        timeLabel.text = timeFormatter.string(from: elapsedTime)
+        
+        timeSlider.minimumValue = 0
+        timeSlider.maximumValue = Float(audioPlayer?.duration ?? 0)
+        timeSlider.value = Float(elapsedTime)
+    }
     
     @IBAction func recordButtonPressed(_ sender: Any) {
     
     }
 }
 
+extension AudioRecorderController: AVAudioPlayerDelegate {
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        if let error = error {
+            print("Audio playback error: \(error)")
+        }
+    }
+    
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        updateViews()   // TODO: is this on the main thread?
+        // TODO: Cancel timer?
+    }
+}
