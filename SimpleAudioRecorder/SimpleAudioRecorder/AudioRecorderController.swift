@@ -15,6 +15,7 @@ class AudioRecorderController: UIViewController {
     var audioPlayer: AVAudioPlayer?
     
     // MARK: Recording
+    var audioRecorder: AVAudioRecorder?
     
     @IBOutlet weak var recordButton: UIButton!
     @IBOutlet weak var playButton: UIButton!
@@ -63,7 +64,7 @@ class AudioRecorderController: UIViewController {
     var timer: Timer?
     
     var isPlaying: Bool {
-        audioPlayer?.isPlaying ?? false
+        return audioPlayer?.isPlaying ?? false
     }
     
     // Play back
@@ -116,8 +117,45 @@ class AudioRecorderController: UIViewController {
         timeSlider.value = Float(elapsedTime)
     }
     
+    // MARK: Recoding
     @IBAction func recordButtonPressed(_ sender: Any) {
+        recordToggle()
+    }
     
+    var isRecording: Bool {
+        return audioRecorder?.isRecording ?? false
+    }
+    
+    func record() {
+        // Path to save in the documents direcgtory
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        
+        // Filename (ISO8601 format for time) .caf extension (core audio file)
+        let name = ISO8601DateFormatter.string(from: Date(), timeZone: .current, formatOptions: [.withInternetDateTime])
+        
+        // 2019-12-03T10:42:35-08:00.caf
+        let file = documentsDirectory.appendingPathComponent(name).appendingPathExtension("caf")
+        
+        print("Record URL: \(file)")
+        // Audio Quality 44.1KHz
+        let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+        
+        // Start a recoding
+        audioRecorder = try! AVAudioRecorder(url: file, format: format)
+        audioRecorder?.record()
+    }
+    
+    func stopRecording() {
+        audioRecorder?.stop()
+        audioRecorder = nil
+    }
+    
+    func recordToggle() {
+        if isRecording {
+            stopRecording()
+        } else {
+            record()
+        }
     }
 }
 
